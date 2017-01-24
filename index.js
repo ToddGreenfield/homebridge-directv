@@ -1,86 +1,132 @@
+'use strict';
+
+// Directv Platform for HomeBridge
+//
+// Remember to add platform to config.json. Example:
+// "platforms": [
+//     {
+//         "platform": "Directv",				// required
+//         "name": "DTV",						// Optional - defaults to DTV
+//         "ip_address": "IP of Primary STB", 	// required
+//     }
+// ], 
+//
+//  TO DO - Add Characteristic to change channels
+//
+//
+
 var DirecTV = require('directv-remote');
-var Service;
-var Characteristic;
-var validIp = false;
+var titleCase = require('title-case');
+var remote;
+
+function DirectvPlatform(log, config){
+	this.config = config;
+    this.ip_address = config["ip_address"];
+	this.name = config["name"] || 'DTV';
+    this.log = log;
+
+	if (!this.ip_address) throw new Error("DTV - You must provide a config value for 'ip_address'.");
+
+	remote = new DirecTV.Remote(this.ip_address);
+	
+}
+
+DirectvPlatform.prototype = {
+    accessories: function(callback) {
+        this.log("Fetching DTV locations.");
+        var that = this;
+        var foundAccessories = [];
+
+		remote.getLocations('1', function(err, response) {
+			if (!err) {
+				that.log( "Finding DTV Locations (accessories)...");
+				for(var i=0; i <response.locations.length; ++i){
+					that.log( "Found DTV Location %s", response.locations[i].locationName);
+					var accessory = new DirectvSTBAccessory(that.log, response.locations[i], that.config);
+					foundAccessories.push(accessory);
+				}
+				callback(foundAccessories);
+			} else {
+				that.log( "Failed to find any DTV Locations (accessories) - Check IP address in config.json!");
+				callback(null);
+			}		
+        });
+    }
+}
+
+function DirectvSTBAccessory(log, location, config) {
+    // STB basic device info
+    this.log = log;
+	this.config = config;
+    this.location = titleCase(location.locationName);
+	this.config_name = config["name"] || 'DTV';
+	this.name = this.location + ' ' + this.config_name; 
+	this.ip_address = config["ip_address"];
+    this.clientAddr = location.clientAddr.toUpperCase();
+
+}
+
+DirectvSTBAccessory.prototype = {
+    getRemote: function(type, callback){
+        var that = this;
+		var status;
+		remote.getMode(that.clientAddr, function (err, response) {
+			if (err || response.mode == "1") {
+				that.log('DTV location %s power state is currently OFF or UNREACHABLE', that.location);
+				callback(null, false);
+				return;
+			} else if (response.mode == "0") {
+				that.log('DTV location %s power state is currently ON', that.location);
+				callback(null, true);
+			}
+		});
+	},
+    setRemotePower: function(state, callback){
+        var that = this;
+		remote.processKey('power', that.clientAddr, function(err, reponse) {
+			if (err) {
+				that.log('Unable to change DTV location %s power state!', that.location);
+				callback(new Error("STB not responding."), false);
+				return;
+			} else {
+				that.log('DTV location %s power state is now: %s', that.location, (state) ? 'ON' : 'OFF');
+                callback();
+            }
+        });
+    },
+    getServices: function() {
+        var that = this;
+        var services = []
+        this.service = new Service.Switch(this.name);
+
+		this.service.getCharacteristic(Characteristic.On)
+			.on('get', function(callback) { that.getRemote("power", callback);})
+			.on('set', function(value, callback) {that.setRemotePower(value, callback);});
+
+        services.push(this.service);
+
+        var service = new Service.AccessoryInformation();
+
+        service.setCharacteristic(Characteristic.Manufacturer, "Directv")
+            .setCharacteristic(Characteristic.Name, this.name)
+			.setCharacteristic(Characteristic.SerialNumber, this.clientAddr)
+			.setCharacteristic(Characteristic.Model, this.ip_address);
+			
+        services.push(service);
+
+        return services;
+    }
+}
+
+module.exports.accessory = DirectvSTBAccessory;
+module.exports.platform = DirectvPlatform;
+
+var Service, Characteristic;
 
 module.exports = function(homebridge) {
   Service = homebridge.hap.Service;
   Characteristic = homebridge.hap.Characteristic;
-  homebridge.registerAccessory("homebridge-directv", "Directv", DirectvAccessory);
-};
 
-function DirectvAccessory(log, config) {
-	var that = this;
-	this.log = log;
-	this.config = config;
-	this.name = config["name"];
-	this.ip_address	= config["ip_address"];
-	 
-	if (!this.ip_address) throw new Error("You must provide a config value for 'ip_address'.");
-	 
-	DirecTV.validateIP(this.ip_address, function(err) {
-		if (err) {
-			that.log( "No response from a DTV at: %s", that.ip_address);
-		} else
-			that.log( "Valid DTV found at: %s", that.ip_address);
-			validIp = true;
-	})
-
-	this.remote = new DirecTV.Remote(this.ip_address);
-	this.service = new Service.Switch(this.name);
-
-    this.service
-        .getCharacteristic(Characteristic.On)
-        .on('get', this._getOn.bind(this))
-        .on('set', this._setOn.bind(this));
-}
-
-DirectvAccessory.prototype.getInformationService = function() {
-    var informationService = new Service.AccessoryInformation();
-    informationService
-        .setCharacteristic(Characteristic.Name, this.name)
-        .setCharacteristic(Characteristic.Manufacturer, 'DirectTV')
-        .setCharacteristic(Characteristic.Model, '0.0.1')
-        .setCharacteristic(Characteristic.SerialNumber, this.ip_address);
-    return informationService;
-};
-
-DirectvAccessory.prototype.getServices = function() {
-    return [this.service, this.getInformationService()];
-};
-
-DirectvAccessory.prototype._getOn = function(callback) {
-    var accessory = this;
-    if (validIp) {
-      this.remote.getMode('0', function(err,response) {
-          if (response.mode =='0') {
-            accessory.log('DTV is ON.');
-            callback(null, true);
-          } else {
-            accessory.log('DTV is OFF.');
-            callback(null, false);
-		  }
-      });
-	 } else {
-	     accessory.log('No response from DTV at: %s', this.ip_address);
-		 callback(null, false);
-	 }
-};
-
-DirectvAccessory.prototype._setOn = function(on, callback) {
-     var accessory = this;
-	 if (validIp) {
-	   this.remote.processKey('power', '0', function(err, reponse) {
-            if (err) {
-				accessory.log(err);
-                callback(err);
-            } else {
-				accessory.log('DTV power state is now: %s', (on) ? 'ON' : 'OFF');
-                callback(null);
-            }
-        });
-	 } else {
-	     accessory.log('No response from DTV at: %s', this.ip_address);
-		 callback(null);
-	 }		
+  homebridge.registerAccessory("homebridge-directv-location", "DirectvSTB", DirectvSTBAccessory);
+  homebridge.registerPlatform("homebridge-directv", "Directv", DirectvPlatform);
 };

@@ -15,7 +15,8 @@
     "Directv"
   ],
   "dependencies": {
-    "directv-remote": "^0.0.1"
+    "directv-remote": "^0.0.1",
+    "title-case": "^2.1.0"
   },
   "engines": {
     "node": ">=0.12.0",

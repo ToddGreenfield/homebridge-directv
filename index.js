@@ -184,7 +184,7 @@ function makeChannelCharacteristic() {
     this.setProps({
       format: Characteristic.Formats.INT,
       unit: Characteristic.Units.NONE,
-      maxValue: 500,
+      maxValue: 575,
       minValue: 0,
       minStep: 1,
       perms: [Characteristic.Perms.READ, Characteristic.Perms.WRITE, Characteristic.Perms.NOTIFY]

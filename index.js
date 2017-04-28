@@ -108,13 +108,20 @@ DirectvSTBAccessory.prototype = {
         var that = this;
 		switch(type) {
 			case "power":
-				remote.processKey('power', that.clientAddr, function(err, response) {
-					if (err) {
-						that.log('Unable to change DTV location %s power state!', that.location);
-						callback(new Error("STB Process Power Error."), false);
-						return;
+				remote.getMode(that.clientAddr, function (err, response) {
+					if (err) { response.mode= "1"; }
+					if (parseInt(response.mode) === parseInt(value ? 1 : 0)) {
+						remote.processKey('power', that.clientAddr, function(err, response) {
+							if (err) {
+								that.log('Unable to change DTV location %s power state!', that.location);
+								callback(new Error("STB Process Power Error."), false);
+								return;
+							} else {
+								that.log('DTV location %s power state is now: %s', that.location, (value) ? 'ON' : 'OFF');
+								callback();
+							}
+						});
 					} else {
-						that.log('DTV location %s power state is now: %s', that.location, (value) ? 'ON' : 'OFF');
 						callback();
 					}
 				});

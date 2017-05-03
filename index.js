@@ -12,8 +12,6 @@
 //     }
 // ], 
 //
-//  TO DO - Add Characteristic to change channels
-//
 //
 
 var inherits = require('util').inherits;
@@ -76,7 +74,6 @@ function DirectvSTBAccessory(log, location, config) {
 DirectvSTBAccessory.prototype = {
     getRemote: function(type, callback){
         var that = this;
-		var status;
 		switch(type) {
 			case "power":
 				remote.getMode(that.clientAddr, function (err, response) {
@@ -91,14 +88,20 @@ DirectvSTBAccessory.prototype = {
 				});
 			break;
 			case "channel":
-				remote.getTuned(that.clientAddr, function (err, response) {
-					if (err) {
-						that.log('Unable to call for current channel.');
-						callback(new Error("STB Get Tuned Error."), false);
-						return;
-					} else {
-						that.log('Current Channel is %d', parseInt(response.major))
-						callback(null, parseInt(response.major));
+				remote.getMode(that.clientAddr, function (err, response) {
+					if (err || response.mode == "1") {
+						that.log('Unable to call for current channel at DTV location %s.', that.location);
+						callback(null, parseInt("0"));	
+					} else if (response.mode == "0") {
+						remote.getTuned(that.clientAddr, function (err, response) {
+							if (!err) {
+								that.log('DTV location %s current channel is %d', that.location, parseInt(response.major));
+								callback(null, parseInt(response.major));
+							} else {
+								that.log('Unable to call for current channel at DTV location %s.', that.location);
+								callback(null, parseInt("0"));	
+							}
+						});
 					}
 				});
 			break;
@@ -128,14 +131,20 @@ DirectvSTBAccessory.prototype = {
 				});
 			break;
 			case "channel":
-				remote.tune(value, that.clientAddr, function(err, response) {
-					if (err) {
-						that.log('Unable to change DTV location %s Channel because %s', that.location, err);
-						callback(new Error("STB Process Channel Error."), false);
-						return;
-					} else {
-						that.log('DTV location %s Channel is now: %s', that.location, value);
-						callback();
+				remote.getMode(that.clientAddr, function (err, response) {
+					if (err || response.mode == "1") {
+						that.log('Unable to set channel at DTV location %s.', that.location);
+						callback();	
+					} else if (response.mode == "0") {
+						remote.tune(value, that.clientAddr, function(err, response) {
+							if (err) {
+								that.log('Unable to set channel at DTV location %s', that.location);
+								callback();
+							} else {
+								that.log('DTV location %s Channel is now: %s', that.location, value);
+								callback();
+							}
+						});
 					}
 				});
 			break;

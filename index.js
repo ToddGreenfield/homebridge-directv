@@ -109,8 +109,9 @@ DirectvSTBAccessory.prototype = {
 		switch(type) {
 			case "power":
 				remote.getMode(that.clientAddr, function (err, response) {
-					if (err) { response.mode= "1"; }
-					if (parseInt(response.mode) === parseInt(value ? 1 : 0)) {
+					var responseMode = response.mode;
+					if (err) { responseMode = "1"}
+					if (parseInt(responseMode) === parseInt(value ? 1 : 0)) {
 						remote.processKey('power', that.clientAddr, function(err, response) {
 							if (err) {
 								that.log('Unable to change DTV location %s power state!', that.location);

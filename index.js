@@ -153,12 +153,18 @@ DirectvSTBAccessory.prototype = {
     getServices: function() {
         var that = this;
         var services = []
-        this.service = new Service.Switch(this.name);
+		if (this.clientAddr == '0') {
+			this.service = new Service.Switch(this.name);
 
-		this.service.getCharacteristic(Characteristic.On)
-			.on('get', function(callback) { that.getRemote("power", callback);})
-			.on('set', function(value, callback) {that.setRemote("power", value, callback);});
+			this.service.getCharacteristic(Characteristic.On)
+				.on('get', function(callback) { that.getRemote("power", callback);})
+				.on('set', function(value, callback) {that.setRemote("power", value, callback);});
+		} else {
+			this.service = new Service.MotionSensor(this.name);
 
+			this.service.getCharacteristic(Characteristic.MotionDetected)
+				.on('get', function(callback) { that.getRemote("power", callback);});
+		}
 		this.service.addCharacteristic(ChannelCharacteristic)
 			.on('get', function(callback) { that.getRemote("channel", callback);})
 			.on('set', function(value, callback) {that.setRemote("channel", value, callback);});		

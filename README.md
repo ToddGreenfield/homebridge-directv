@@ -1,25 +1,23 @@
-#Homebridge-directv
+# Homebridge-directv
 
 DirecTV plugin for [Homebridge](https://github.com/nfarina/homebridge)
 Leverages [directv-remote](https://www.npmjs.com/package/directv-remote)
 
 This plugin allows you to control your DirecTV with HomeKit and Siri.
 
-##Installation
+## Installation
 1. Install homebridge using: `npm install -g homebridge`
 2. Install this plugin using: `npm install -g homebridge-directv`
 3. Update your configuration file like the example below.
 4. Make sure to enable external device access on your cable box:
 	Menu > Settings > Whole-Home > External Device > Allow
 
-Note: Version 0.0.5 changes the plugin from an Accessory to a Platform. It will also auto detect all Geni STB's (Set Top Box) as part of whole-house systems attached to the primary server STB whose IP is provided. 
-It does NOT however have the ability to power on/off the remote boxes. From everything I have read this is a limitation/problem with the Directv Geni boxes. 
-All other functions which are part of the directv-remote package work (which channel, menu, etc), however those are not yet implemented as part of the plugin (looking for assistance with Characteristics).
-
-Version 0.0.6 added optional exclude_geni paramater as well as ability to change channels. Using an app like Eve you can manually adjust channel via slider (a bit challening).
-You can also create a Scene called "Channel 4" in Eve, which will then show up in Homekit and tell Siri to "Change to channel 4"!
+This plugin is a Platform and it will show the Primary STB (Set Top Box) (the one with the ip address)as a Switch.  
+It will also auto detect all Geni STB's and show them as Motion Sensors (since they cannot be powered on/off due to a limitation in the system).  
+In both cases, you can change the channel in the room using an app like Eve (Elagato) via the slider (a bit challenging) or you can tune the device to a favorite channel and then create a scene like "Channel 4".  
+Scenes created in Eve will show up in the Apple Home app and give the ability to tell Siri to "Change to channel 4"!
 	
-##Configuration
+# Configuration
 Example config.json:
 
 ```js
@@ -33,7 +31,7 @@ Example config.json:
 	],
 ```
 
-###Explanation:
+## Explanation:
 
 Field           | Description
 ----------------|------------
@@ -43,6 +41,7 @@ Field           | Description
 **exclude_geni**| (Optional) boolean for excluding non-primary STBs (Geni's) so accessories are not created for them. If true, will only create accessory for primary bound tuner STB. Defaults to false.
 
 
-##Limitations:
+# Limitations:
 
 Power only works for the primary STB (the one with the IP).
+Apple Home app cannot change channels without first creating a scene in an app like Eve (Elagato).

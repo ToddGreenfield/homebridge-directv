@@ -1,6 +1,6 @@
 {
   "name": "homebridge-directv",
-  "version": "0.0.10",
+  "version": "1.0.0",
   "description": "Homebridge plugin for Directv",
   "main": "index.js",
   "scripts": {

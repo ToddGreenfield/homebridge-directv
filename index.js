@@ -8,7 +8,9 @@
 //         "platform": "Directv",				// required
 //         "name": "DTV",						// Optional - defaults to DTV
 //         "ip_address": "IP of Primary STB", 	// required
-//		   "exclude_geni": true					// Optional - defaults to false
+//		   "exclude_geni": true,				// Optional - defaults to false
+//		   "min_channel": 1,					// Optional - defaults to 1
+//		   "max_channel": 575					// Optional - defaults to 575
 //     }
 // ], 
 //
@@ -17,13 +19,15 @@
 var inherits = require('util').inherits;
 var DirecTV = require('directv-remote');
 var titleCase = require('title-case');
-var remote;
+var remote, min_ch, max_ch;
 
 function DirectvPlatform(log, config){
 	this.config = config;
 	this.ip_address = config["ip_address"];
 	this.name = config["name"] || 'DTV';
 	this.excludeGeni = config["exclude_geni"] || false;
+	min_ch = config["min_channel"] || 1;
+	max_ch = config["max_channel"] || 575;
 	this.log = log;
 
 	if (!this.ip_address) throw new Error("DTV - You must provide a config value for 'ip_address'.");
@@ -207,8 +211,8 @@ function makeChannelCharacteristic() {
     this.setProps({
       format: Characteristic.Formats.INT,
       unit: Characteristic.Units.NONE,
-      maxValue: 575,
-      minValue: 0,
+      maxValue: max_ch,
+      minValue: min_ch,
       minStep: 1,
       perms: [Characteristic.Perms.READ, Characteristic.Perms.WRITE, Characteristic.Perms.NOTIFY]
     });

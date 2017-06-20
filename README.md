@@ -1,4 +1,5 @@
 # Homebridge-directv
+[![NPM Version](https://img.shields.io/npm/v/homebridge-directv.svg)](https://www.npmjs.com/package/homebridge-directv)
 
 DirecTV plugin for [Homebridge](https://github.com/nfarina/homebridge)
 Leverages [directv-remote](https://www.npmjs.com/package/directv-remote)

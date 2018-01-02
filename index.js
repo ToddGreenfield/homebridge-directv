@@ -12,7 +12,7 @@
 //		   "min_channel": 1,					// Optional - defaults to 1
 //		   "max_channel": 575					// Optional - defaults to 575
 //     }
-// ], 
+// ],
 //
 //
 
@@ -33,7 +33,7 @@ function DirectvPlatform(log, config){
 	if (!this.ip_address) throw new Error("DTV - You must provide a config value for 'ip_address'.");
 
 	remote = new DirecTV.Remote(this.ip_address);
-	
+
 }
 
 DirectvPlatform.prototype = {
@@ -43,9 +43,9 @@ DirectvPlatform.prototype = {
         var foundAccessories = [];
 
 		remote.getLocations('1', function(err, response) {
-			if (!err) {
+			if (!err && (response && response.locations)) {
 				that.log( "Finding DTV Locations (accessories)...");
-				for(var i=0; i <response.locations.length; ++i){
+				for (var i=0; i <response.locations.length; ++i) {
 					if ((!that.excludeGeni) || (response.locations[i].clientAddr == '0')) {
 						that.log( "Found DTV Location %s", response.locations[i].locationName);
 						var accessory = new DirectvSTBAccessory(that.log, response.locations[i], that.config);
@@ -58,7 +58,7 @@ DirectvPlatform.prototype = {
 			} else {
 				that.log( "Failed to find any DTV Locations (accessories) - Check IP address in config.json!");
 				callback(null);
-			}		
+			}
         });
     }
 }
@@ -69,7 +69,7 @@ function DirectvSTBAccessory(log, location, config) {
 	this.config = config;
     this.location = titleCase(location.locationName);
 	this.config_name = config["name"] || 'DTV';
-	this.name = this.location + ' ' + this.config_name; 
+	this.name = this.location + ' ' + this.config_name;
 	this.ip_address = config["ip_address"];
     this.clientAddr = location.clientAddr.toUpperCase();
 
@@ -95,7 +95,7 @@ DirectvSTBAccessory.prototype = {
 				remote.getMode(that.clientAddr, function (err, response) {
 					if (err || response.mode == "1") {
 						that.log('Unable to call for current channel at DTV location %s.', that.location);
-						callback(null, parseInt("0"));	
+						callback(null, parseInt("0"));
 					} else if (response.mode == "0") {
 						remote.getTuned(that.clientAddr, function (err, response) {
 							if (!err) {
@@ -103,13 +103,13 @@ DirectvSTBAccessory.prototype = {
 								callback(null, parseInt(response.major));
 							} else {
 								that.log('Unable to call for current channel at DTV location %s.', that.location);
-								callback(null, parseInt("0"));	
+								callback(null, parseInt("0"));
 							}
 						});
 					}
 				});
 			break;
-		}	
+		}
 	},
     setRemote: function(type, value, callback){
         var that = this;
@@ -138,7 +138,7 @@ DirectvSTBAccessory.prototype = {
 				remote.getMode(that.clientAddr, function (err, response) {
 					if (err || response.mode == "1") {
 						that.log('Unable to set channel at DTV location %s.', that.location);
-						callback();	
+						callback();
 					} else if (response.mode == "0") {
 						remote.tune(value, that.clientAddr, function(err, response) {
 							if (err) {
@@ -152,7 +152,7 @@ DirectvSTBAccessory.prototype = {
 					}
 				});
 			break;
-		}	
+		}
     },
     getServices: function() {
         var that = this;
@@ -171,8 +171,8 @@ DirectvSTBAccessory.prototype = {
 		}
 		this.service.addCharacteristic(ChannelCharacteristic)
 			.on('get', function(callback) { that.getRemote("channel", callback);})
-			.on('set', function(value, callback) {that.setRemote("channel", value, callback);});		
-			
+			.on('set', function(value, callback) {that.setRemote("channel", value, callback);});
+
         services.push(this.service);
 
         var service = new Service.AccessoryInformation();
@@ -181,7 +181,7 @@ DirectvSTBAccessory.prototype = {
             .setCharacteristic(Characteristic.Name, this.name)
 			.setCharacteristic(Characteristic.SerialNumber, this.clientAddr)
 			.setCharacteristic(Characteristic.Model, this.ip_address);
-			
+
         services.push(service);
 
         return services;
@@ -199,7 +199,7 @@ module.exports = function(homebridge) {
 
 // we can only do this after we receive the homebridge API object
   makeChannelCharacteristic();
-  
+
   homebridge.registerAccessory("homebridge-directv-location", "DirectvSTB", DirectvSTBAccessory);
   homebridge.registerPlatform("homebridge-directv", "Directv", DirectvPlatform);
 };

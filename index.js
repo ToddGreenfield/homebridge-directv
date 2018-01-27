@@ -43,9 +43,9 @@ DirectvPlatform.prototype = {
         var foundAccessories = [];
 
 		remote.getLocations('1', function(err, response) {
-			if (!err && (response && response.locations)) {
+			if (!err) {
 				that.log( "Finding DTV Locations (accessories)...");
-				for (var i=0; i <response.locations.length; ++i) {
+				for(var i=0; i <response.locations.length; ++i){
 					if ((!that.excludeGeni) || (response.locations[i].clientAddr == '0')) {
 						that.log( "Found DTV Location %s", response.locations[i].locationName);
 						var accessory = new DirectvSTBAccessory(that.log, response.locations[i], that.config);
@@ -82,11 +82,11 @@ DirectvSTBAccessory.prototype = {
 			case "power":
 				remote.getMode(that.clientAddr, function (err, response) {
 					if (err || response.mode == "1") {
-						that.log('DTV location %s power state is currently OFF or UNREACHABLE', that.location);
+						that.log.debug('DTV location %s power state is currently OFF or UNREACHABLE', that.location);
 						callback(null, false);
 						return;
 					} else if (response.mode == "0") {
-						that.log('DTV location %s power state is currently ON', that.location);
+						that.log.debug('DTV location %s power state is currently ON', that.location);
 						callback(null, true);
 					}
 				});
@@ -94,15 +94,15 @@ DirectvSTBAccessory.prototype = {
 			case "channel":
 				remote.getMode(that.clientAddr, function (err, response) {
 					if (err || response.mode == "1") {
-						that.log('Unable to call for current channel at DTV location %s.', that.location);
+						that.log.debug('Unable to call for current channel at DTV location %s.', that.location);
 						callback(null, parseInt("0"));
 					} else if (response.mode == "0") {
 						remote.getTuned(that.clientAddr, function (err, response) {
 							if (!err) {
-								that.log('DTV location %s current channel is %d', that.location, parseInt(response.major));
+								that.log.debug('DTV location %s current channel is %d', that.location, parseInt(response.major));
 								callback(null, parseInt(response.major));
 							} else {
-								that.log('Unable to call for current channel at DTV location %s.', that.location);
+								that.log.debug('Unable to call for current channel at DTV location %s.', that.location);
 								callback(null, parseInt("0"));
 							}
 						});
@@ -121,11 +121,11 @@ DirectvSTBAccessory.prototype = {
 					if (parseInt(responseMode) === parseInt(value ? 1 : 0)) {
 						remote.processKey('power', that.clientAddr, function(err, response) {
 							if (err) {
-								that.log('Unable to change DTV location %s power state!', that.location);
+								that.log.debug('Unable to change DTV location %s power state!', that.location);
 								callback(new Error("STB Process Power Error."), false);
 								return;
 							} else {
-								that.log('DTV location %s power state is now: %s', that.location, (value) ? 'ON' : 'OFF');
+								that.log.debug('DTV location %s power state is now: %s', that.location, (value) ? 'ON' : 'OFF');
 								callback();
 							}
 						});
@@ -137,15 +137,15 @@ DirectvSTBAccessory.prototype = {
 			case "channel":
 				remote.getMode(that.clientAddr, function (err, response) {
 					if (err || response.mode == "1") {
-						that.log('Unable to set channel at DTV location %s.', that.location);
+						that.log.debug('Unable to set channel at DTV location %s.', that.location);
 						callback();
 					} else if (response.mode == "0") {
 						remote.tune(value, that.clientAddr, function(err, response) {
 							if (err) {
-								that.log('Unable to set channel at DTV location %s', that.location);
+								that.log.debug('Unable to set channel at DTV location %s', that.location);
 								callback();
 							} else {
-								that.log('DTV location %s Channel is now: %s', that.location, value);
+								that.log.debug('DTV location %s Channel is now: %s', that.location, value);
 								callback();
 							}
 						});

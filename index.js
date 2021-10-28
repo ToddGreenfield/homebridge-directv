@@ -26,7 +26,7 @@ function DirectvPlatform(log, config){
 	this.ip_address = config["ip_address"];
 	this.name = config["name"] || 'DTV';
 	this.excludeGeni = config["exclude_geni"] || false;
-	min_ch = config["min_channel"] || 1;
+	min_ch = config["min_channel"] || 0;
 	max_ch = config["max_channel"] || 575;
 	this.log = log;
 
